@@ -5,12 +5,12 @@ import com.apollographql.apollo.cache.CacheHeaders
 import com.apollographql.apollo.cache.normalized.CacheKey
 import com.apollographql.apollo.cache.normalized.NormalizedCache
 import com.apollographql.apollo.cache.normalized.Record
-import com.nytimes.android.external.cache.Cache
-import com.nytimes.android.external.cache.CacheBuilder
-import com.nytimes.android.external.cache.Weigher
+import com.dropbox.android.external.cache4.Cache
 import java.nio.charset.Charset
-import java.util.concurrent.Callable
+import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
+import kotlin.time.ExperimentalTime
+import kotlin.time.milliseconds
 
 /**
  * A [NormalizedCache] backed by an in memory [Cache]. Can be configured with an optional secondaryCache [ ], which will be used as a backup if a [Record] is not present in the primary cache.
@@ -20,8 +20,9 @@ import kotlin.reflect.KClass
  */
 class LruNormalizedCache internal constructor(evictionPolicy: EvictionPolicy) : NormalizedCache() {
 
+  @OptIn(ExperimentalTime::class)
   private val lruCache: Cache<String, Record> =
-      CacheBuilder.newBuilder().apply {
+      Cache.Builder.newBuilder().apply {
         if (evictionPolicy.maxSizeBytes != null) {
           maximumWeight(evictionPolicy.maxSizeBytes).weigher(
               Weigher { key: String, value: Record ->
@@ -30,21 +31,23 @@ class LruNormalizedCache internal constructor(evictionPolicy: EvictionPolicy) : 
           )
         }
         if (evictionPolicy.maxEntries != null) {
-          maximumSize(evictionPolicy.maxEntries)
+          maximumCacheSize(evictionPolicy.maxEntries)
         }
         if (evictionPolicy.expireAfterAccess != null) {
-          expireAfterAccess(evictionPolicy.expireAfterAccess, evictionPolicy.expireAfterAccessTimeUnit!!)
+          val duration = TimeUnit.MILLISECONDS.convert(evictionPolicy.expireAfterAccess, evictionPolicy.expireAfterAccessTimeUnit)
+          expireAfterAccess(duration.milliseconds)
         }
         if (evictionPolicy.expireAfterWrite != null) {
-          expireAfterWrite(evictionPolicy.expireAfterWrite, evictionPolicy.expireAfterWriteTimeUnit!!)
+          val duration = TimeUnit.MILLISECONDS.convert(evictionPolicy.expireAfterWrite, evictionPolicy.expireAfterAccessTimeUnit)
+          expireAfterWrite(duration.milliseconds)
         }
       }.build()
 
   override fun loadRecord(key: String, cacheHeaders: CacheHeaders): Record? {
     return try {
-      lruCache.get(key, Callable {
-        nextCache?.loadRecord(key, cacheHeaders)
-      })
+      lruCache.get(key) {
+        nextCache?.loadRecord(key, cacheHeaders)!!
+      }
     } catch (ignored: Exception) { // Thrown when the nextCache's value is null
       return null
     }.also {
@@ -62,7 +65,7 @@ class LruNormalizedCache internal constructor(evictionPolicy: EvictionPolicy) : 
   override fun remove(cacheKey: CacheKey, cascade: Boolean): Boolean {
     var result: Boolean = nextCache?.remove(cacheKey, cascade) ?: false
 
-    val record = lruCache.getIfPresent(cacheKey.key)
+    val record = lruCache.get(cacheKey.key)
     if (record != null) {
       lruCache.invalidate(cacheKey.key)
       result = true
@@ -92,7 +95,7 @@ class LruNormalizedCache internal constructor(evictionPolicy: EvictionPolicy) : 
   }
 
   @OptIn(ExperimentalStdlibApi::class)
-  override fun dump() = buildMap<KClass<*>, Map<String, Record>> {
+  override fun dump() = buildMap<KClass<*>, Map<in String, Record>> {
     put(this@LruNormalizedCache::class, lruCache.asMap())
     putAll(nextCache?.dump().orEmpty())
   }

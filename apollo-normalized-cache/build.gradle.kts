@@ -37,7 +37,7 @@ kotlin {
       dependsOn(commonMain)
       dependencies {
         implementation(kotlin("stdlib"))
-        implementation(groovy.util.Eval.x(project, "x.dep.cache"))
+        implementation(groovy.util.Eval.x(project, "x.dep.dropboxCache"))
       }
     }
 

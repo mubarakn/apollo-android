@@ -134,7 +134,7 @@ abstract class NormalizedCache {
     leafCache.nextCache = cache
   }
 
-  open fun dump(): Map<@JvmSuppressWildcards KClass<*>, Map<String, Record>> {
+  open fun dump(): Map<@JvmSuppressWildcards KClass<*>, Map<in String, Record>> {
     return mapOf(this::class to emptyMap())
   }
 
