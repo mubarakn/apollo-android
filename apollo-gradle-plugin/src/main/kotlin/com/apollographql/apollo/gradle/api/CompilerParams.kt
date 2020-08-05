@@ -33,7 +33,6 @@ interface CompilerParams {
    */
   val generateOperationOutput: Property<Boolean>
 
-
   /**
    * For custom scalar types like Date, map from the GraphQL type to the jvm/kotlin type.
    *

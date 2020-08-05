@@ -19,9 +19,9 @@ class ValidationTest(name: String, private val graphQLFile: File) {
   fun testValidation() {
     val schemaFile = File("src/test/validation/schema.json")
     val schema = IntrospectionSchema(schemaFile)
-    val packageNameProvider = DefaultPackageNameProvider(
+    val packageNameProvider = DefaultPackageNameProvider.of(
         rootFolders = listOf(graphQLFile.parentFile),
-        schemaFile = schemaFile,
+        schemaPackageName = "",
         rootPackageName = ""
     )
 

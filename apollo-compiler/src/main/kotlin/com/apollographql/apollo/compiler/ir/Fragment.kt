@@ -1,26 +1,16 @@
 package com.apollographql.apollo.compiler.ir
 
-import com.apollographql.apollo.compiler.*
+import com.apollographql.apollo.compiler.ClassNames
+import com.apollographql.apollo.compiler.SchemaTypeSpecBuilder
+import com.apollographql.apollo.compiler.Util
 import com.apollographql.apollo.compiler.VisitorSpec.VISITOR_CLASSNAME
+import com.apollographql.apollo.compiler.flatten
+import com.apollographql.apollo.compiler.withBuilder
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.FieldSpec
 import com.squareup.javapoet.TypeSpec
 import com.squareup.moshi.JsonClass
 import javax.lang.model.element.Modifier
-
-data class ParsedFragment(
-    val fragmentName: String,
-    val source: String,
-    val description: String,
-    val typeCondition: String,
-    val possibleTypes: List<String>,
-    val fields: List<Field>,
-    val fragmentRefs: List<FragmentRef>,
-    val inlineFragments: List<InlineFragment>,
-    val filePath: String,
-    val sourceLocation: SourceLocation
-)
-
 
 @JsonClass(generateAdapter = true)
 data class Fragment(
@@ -32,6 +22,7 @@ data class Fragment(
     val fields: List<Field>,
     val fragmentRefs: List<FragmentRef>,
     val inlineFragments: List<InlineFragment>,
+    val filePath: String?, // might be null if coming from another module
     val sourceLocation: SourceLocation
 ) : CodeGenerator {
 

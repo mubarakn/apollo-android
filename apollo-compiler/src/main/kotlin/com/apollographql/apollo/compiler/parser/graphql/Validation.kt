@@ -3,8 +3,6 @@ package com.apollographql.apollo.compiler.parser.graphql
 import com.apollographql.apollo.compiler.PackageNameProvider
 import com.apollographql.apollo.compiler.ir.Field
 import com.apollographql.apollo.compiler.ir.Fragment
-import com.apollographql.apollo.compiler.ir.Operation
-import com.apollographql.apollo.compiler.ir.ParsedFragment
 import com.apollographql.apollo.compiler.ir.ParsedOperation
 import com.apollographql.apollo.compiler.ir.ScalarType
 import com.apollographql.apollo.compiler.ir.SourceLocation
@@ -25,10 +23,11 @@ internal fun List<ParsedOperation>.checkMultipleOperationDefinitions(packageName
       }
 }
 
-internal fun List<ParsedFragment>.checkMultipleFragmentDefinitions() {
+internal fun List<Fragment>.checkMultipleFragmentDefinitions() {
   groupBy { it.fragmentName }
       .values
       .find { it.size > 1 }
+      ?.sortedBy { if (it.filePath != null) 1 else 0 }
       ?.last()
       ?.run { throw ParseException("$filePath: There can be only one fragment named `$fragmentName`") }
 }
@@ -45,14 +44,14 @@ internal fun ParsedOperation.validateArguments(schema: IntrospectionSchema) {
   }
 }
 
-internal fun ParsedFragment.validateArguments(operation: ParsedOperation, schema: IntrospectionSchema) {
+internal fun Fragment.validateArguments(operation: ParsedOperation, schema: IntrospectionSchema) {
   try {
     fields.validateArguments(operation = operation, schema = schema)
   } catch (e: ParseException) {
     throw DocumentParseException(
         message = "${e.message!!}\nOperation `${operation.operationName}` declaration [${operation.filePath}]",
         sourceLocation = if (e.sourceLocation == SourceLocation.UNKNOWN) sourceLocation else e.sourceLocation,
-        filePath = filePath
+        filePath = filePath!!
     )
   }
 }

@@ -164,9 +164,9 @@ class CodeGenTest(private val folder: File) {
       val schema = IntrospectionSchema(schemaJson)
       val graphQLFile = File(folder, "TestOperation.graphql")
 
-      val packageNameProvider = DefaultPackageNameProvider(
+      val packageNameProvider = DefaultPackageNameProvider.of(
           rootFolders = listOf(folder),
-          schemaFile = schemaJson,
+          schemaPackageName = "",
           rootPackageName = "com.example.${folder.name}"
       )
 
