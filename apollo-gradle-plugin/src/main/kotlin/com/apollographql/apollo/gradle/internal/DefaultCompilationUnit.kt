@@ -45,14 +45,13 @@ abstract class DefaultCompilationUnit @Inject constructor(
     }
 
     if (!compilerParams.schemaFile.isPresent) {
-      compilerParams.schemaFile.set {
-        project.file(
-            resolveSchema(project = project,
-                directories = sourceDirectorySet.srcDirs,
-                schemaPathProvider = service.schemaPath,
-                sourceSetNames = apolloVariant.sourceSetNames
-            )
-        )
+      val schemaPath = resolveSchema(project = project,
+          directories = sourceDirectorySet.srcDirs,
+          schemaPathProvider = service.schemaPath,
+          sourceSetNames = apolloVariant.sourceSetNames
+      )
+      if (schemaPath != null) {
+        compilerParams.schemaFile.set(project.file(schemaPath))
       }
     }
 
@@ -121,7 +120,7 @@ abstract class DefaultCompilationUnit @Inject constructor(
       }
     }
 
-    fun resolveSchema(project: Project, schemaPathProvider: Provider<String>, directories: Set<File>, sourceSetNames: List<String>): String {
+    fun resolveSchema(project: Project, schemaPathProvider: Provider<String>, directories: Set<File>, sourceSetNames: List<String>): String? {
       if (schemaPathProvider.isPresent) {
         val schemaPath = schemaPathProvider.get()
         if (schemaPath.startsWith(File.separator)) {
@@ -155,12 +154,7 @@ abstract class DefaultCompilationUnit @Inject constructor(
           multipleSchemaError(candidates)
         }
 
-        require(candidates.size == 1) {
-          "ApolloGraphQL: cannot find schema.[json | sdl]. Please specify it explicitely. Looked under:\n" +
-              directories.joinToString("\n") { it.absolutePath }
-        }
-
-        return candidates.first().path
+        return candidates.firstOrNull()?.path
       }
     }
   }

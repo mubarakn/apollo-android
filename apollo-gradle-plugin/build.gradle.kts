@@ -2,7 +2,8 @@ plugins {
   id("java")
   id("org.jetbrains.kotlin.jvm")
   id("java-gradle-plugin")
-  id("com.gradle.plugin-publish") version "0.11.0"
+  id("com.gradle.plugin-publish")
+  kotlin("kapt")
 }
 
 // groovy strings with double quotes are GString.
@@ -24,7 +25,8 @@ dependencies {
   implementation(dep("kotlin").dot("stdLib"))
   implementation(dep("okHttp").dot("okHttp4"))
   implementation(dep("moshi").dot("moshi"))
-  
+  kapt(groovy.util.Eval.x(project, "x.dep.moshi.kotlinCodegen"))
+
   testImplementation(dep("junit"))
   testImplementation(dep("okHttp").dot("mockWebServer4"))
 }

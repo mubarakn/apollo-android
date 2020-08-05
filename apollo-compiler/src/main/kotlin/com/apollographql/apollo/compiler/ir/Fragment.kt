@@ -20,9 +20,9 @@ data class Fragment(
     val fields: List<Field>,
     val fragmentRefs: List<FragmentRef>,
     val inlineFragments: List<InlineFragment>,
-    val filePath: String,
+    val filePath: String?, // might be null if coming from another module
     val sourceLocation: SourceLocation
-) : CodeGenerator {
+  ) : CodeGenerator {
 
   /** Returns the Java interface that represents this Fragment object. */
   override fun toTypeSpec(context: CodeGenerationContext, abstract: Boolean): TypeSpec {

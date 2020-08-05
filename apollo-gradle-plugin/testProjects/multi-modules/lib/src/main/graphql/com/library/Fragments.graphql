@@ -1,0 +1,12 @@
+fragment CatFragment on Cat {
+  class
+  mustaches
+}
+
+fragment PlantFragment on Plant {
+  picture(size: $size)
+}
+
+mutation dummy($input: AnimalInput!) {
+  registerAnimal(input: $input)
+}
