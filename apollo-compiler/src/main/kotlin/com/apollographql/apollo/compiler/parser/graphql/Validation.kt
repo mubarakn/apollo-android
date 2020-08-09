@@ -51,7 +51,7 @@ internal fun Fragment.validateArguments(operation: ParsedOperation, schema: Intr
     throw DocumentParseException(
         message = "${e.message!!}\nOperation `${operation.operationName}` declaration [${operation.filePath}]",
         sourceLocation = if (e.sourceLocation == SourceLocation.UNKNOWN) sourceLocation else e.sourceLocation,
-        filePath = filePath!!
+        filePath = filePath ?: ""
     )
   }
 }

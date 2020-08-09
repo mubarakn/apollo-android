@@ -13,19 +13,6 @@ class GraphQLCompiler {
   fun write(args: Arguments) {
     val ir = args.ir
     val customTypeMap = args.customTypeMap.supportedTypeMap(ir.typesUsed)
-    val context = CodeGenerationContext(
-        reservedTypeNames = emptyList(),
-        typeDeclarations = ir.typesUsed,
-        customTypeMap = customTypeMap,
-        operationOutput = args.operationOutput,
-        nullableValueType = args.nullableValueType,
-        ir = ir,
-        useSemanticNaming = args.useSemanticNaming,
-        generateModelBuilder = args.generateModelBuilder,
-        useJavaBeansSemanticNaming = args.useJavaBeansSemanticNaming,
-        suppressRawTypesWarning = args.suppressRawTypesWarning,
-        generateVisitorForPolymorphicDatatypes = args.generateVisitorForPolymorphicDatatypes
-    )
 
     if (args.generateKotlinModels) {
       GraphQLKompiler(
@@ -35,42 +22,64 @@ class GraphQLCompiler {
           useSemanticNaming = args.useSemanticNaming,
           generateAsInternal = args.generateAsInternal,
           kotlinMultiPlatformProject = args.kotlinMultiPlatformProject,
+          writeFragmentsAndTypes = args.writeFragmentsAndTypes,
           enumAsSealedClassPatternFilters = args.enumAsSealedClassPatternFilters.map { it.toRegex() }
       ).write(args.outputDir)
     } else {
+      val context = CodeGenerationContext(
+          reservedTypeNames = emptyList(),
+          typeDeclarations = ir.typesUsed,
+          customTypeMap = customTypeMap,
+          operationOutput = args.operationOutput,
+          nullableValueType = args.nullableValueType,
+          ir = ir,
+          useSemanticNaming = args.useSemanticNaming,
+          generateModelBuilder = args.generateModelBuilder,
+          useJavaBeansSemanticNaming = args.useJavaBeansSemanticNaming,
+          suppressRawTypesWarning = args.suppressRawTypesWarning,
+          generateVisitorForPolymorphicDatatypes = args.generateVisitorForPolymorphicDatatypes
+      )
+
       ir.writeJavaFiles(
           context = context,
+          writeFragmentsAndTypes = args.writeFragmentsAndTypes,
           outputDir = args.outputDir
       )
     }
   }
 
-  private fun CodeGenerationIR.writeJavaFiles(context: CodeGenerationContext, outputDir: File) {
-    fragments.forEach {
-      val typeSpec = it.toTypeSpec(context.copy())
-      JavaFile
-          .builder(context.ir.fragmentsPackageName, typeSpec)
-          .addFileComment(AUTO_GENERATED_FILE)
-          .build()
-          .writeTo(outputDir)
+  private fun CodeGenerationIR.writeJavaFiles(context: CodeGenerationContext, outputDir: File, writeFragmentsAndTypes: Boolean) {
+    if (writeFragmentsAndTypes) {
+      fragments.forEach {
+        val typeSpec = it.toTypeSpec(context.copy())
+        JavaFile
+            .builder(context.ir.fragmentsPackageName, typeSpec)
+            .addFileComment(AUTO_GENERATED_FILE)
+            .build()
+            .writeTo(outputDir)
+      }
     }
 
-    typesUsed.supportedTypeDeclarations().forEach {
-      val typeSpec = it.toTypeSpec(context.copy())
-      JavaFile
-          .builder(context.ir.typesPackageName, typeSpec)
-          .addFileComment(AUTO_GENERATED_FILE)
-          .build()
-          .writeTo(outputDir)
+    if (writeFragmentsAndTypes) {
+      typesUsed.supportedTypeDeclarations().forEach {
+        val typeSpec = it.toTypeSpec(context.copy())
+        JavaFile
+            .builder(context.ir.typesPackageName, typeSpec)
+            .addFileComment(AUTO_GENERATED_FILE)
+            .build()
+            .writeTo(outputDir)
+      }
     }
 
-    if (context.customTypeMap.isNotEmpty()) {
-      val typeSpec = CustomEnumTypeSpecBuilder(context.copy()).build()
-      JavaFile
-          .builder(context.ir.typesPackageName, typeSpec)
-          .addFileComment(AUTO_GENERATED_FILE)
-          .build()
-          .writeTo(outputDir)
+    if (writeFragmentsAndTypes) {
+      if (context.customTypeMap.isNotEmpty()) {
+        val typeSpec = CustomEnumTypeSpecBuilder(context.copy()).build()
+        JavaFile
+            .builder(context.ir.typesPackageName, typeSpec)
+            .addFileComment(AUTO_GENERATED_FILE)
+            .build()
+            .writeTo(outputDir)
+      }
     }
 
     operations.map { OperationTypeSpecBuilder(it, fragments, context.useSemanticNaming) }
@@ -101,6 +110,9 @@ class GraphQLCompiler {
         "It should not be modified by hand.\n"
   }
 
+  /**
+   * For more details about the fields defined here, check the gradle plugin
+   */
   data class Arguments(
       val ir: CodeGenerationIR,
       val outputDir: File,
@@ -109,6 +121,11 @@ class GraphQLCompiler {
       val useSemanticNaming: Boolean,
       val generateKotlinModels: Boolean = false,
       val generateAsInternal: Boolean = false,
+      // for MPP projects, we add helper code to help with optional and generics
+      val kotlinMultiPlatformProject: Boolean = false,
+      // if this compilation unit is reusing some fragments and types from another one, use this
+      // argument to prevent defining the classes multiple times
+      val writeFragmentsAndTypes: Boolean = false,
       // only if generateKotlinModels = true
       val enumAsSealedClassPatternFilters: List<String>,
       // only if generateKotlinModels = false
@@ -120,8 +137,6 @@ class GraphQLCompiler {
       // only if generateKotlinModels = false
       val suppressRawTypesWarning: Boolean,
       // only if generateKotlinModels = false
-      val generateVisitorForPolymorphicDatatypes: Boolean = false,
-      // indicates if target project is MPP
-      val kotlinMultiPlatformProject: Boolean = false
+      val generateVisitorForPolymorphicDatatypes: Boolean = false
   )
 }

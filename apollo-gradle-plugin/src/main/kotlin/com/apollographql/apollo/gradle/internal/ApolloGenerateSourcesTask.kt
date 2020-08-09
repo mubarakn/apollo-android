@@ -242,7 +242,8 @@ abstract class ApolloGenerateSourcesTask : DefaultTask() {
         generateVisitorForPolymorphicDatatypes = generateVisitorForPolymorphicDatatypes.getOrElse(false),
         generateAsInternal = generateAsInternal.getOrElse(false),
         kotlinMultiPlatformProject = kotlinMultiPlatformProject.getOrElse(false),
-        enumAsSealedClassPatternFilters = sealedClassesForEnumsMatching.getOrElse(emptyList())
+        enumAsSealedClassPatternFilters = sealedClassesForEnumsMatching.getOrElse(emptyList()),
+        writeFragmentsAndTypes = metadata == null // If we have incoming metadata, skip writing the fragments and types
     )
 
     GraphQLCompiler().write(args)
