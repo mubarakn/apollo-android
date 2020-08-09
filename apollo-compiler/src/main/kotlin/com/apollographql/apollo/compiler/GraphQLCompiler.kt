@@ -22,7 +22,7 @@ class GraphQLCompiler {
           useSemanticNaming = args.useSemanticNaming,
           generateAsInternal = args.generateAsInternal,
           kotlinMultiPlatformProject = args.kotlinMultiPlatformProject,
-          writeFragmentsAndTypes = args.writeFragmentsAndTypes,
+          writeTypes = args.writeTypes,
           enumAsSealedClassPatternFilters = args.enumAsSealedClassPatternFilters.map { it.toRegex() }
       ).write(args.outputDir)
     } else {
@@ -42,25 +42,23 @@ class GraphQLCompiler {
 
       ir.writeJavaFiles(
           context = context,
-          writeFragmentsAndTypes = args.writeFragmentsAndTypes,
+          writeTypes = args.writeTypes,
           outputDir = args.outputDir
       )
     }
   }
 
-  private fun CodeGenerationIR.writeJavaFiles(context: CodeGenerationContext, outputDir: File, writeFragmentsAndTypes: Boolean) {
-    if (writeFragmentsAndTypes) {
-      fragments.forEach {
-        val typeSpec = it.toTypeSpec(context.copy())
-        JavaFile
-            .builder(context.ir.fragmentsPackageName, typeSpec)
-            .addFileComment(AUTO_GENERATED_FILE)
-            .build()
-            .writeTo(outputDir)
-      }
+  private fun CodeGenerationIR.writeJavaFiles(context: CodeGenerationContext, outputDir: File, writeTypes: Boolean) {
+    fragments.filter { it.filePath != null }.forEach {
+      val typeSpec = it.toTypeSpec(context.copy())
+      JavaFile
+          .builder(context.ir.fragmentsPackageName, typeSpec)
+          .addFileComment(AUTO_GENERATED_FILE)
+          .build()
+          .writeTo(outputDir)
     }
 
-    if (writeFragmentsAndTypes) {
+    if (writeTypes) {
       typesUsed.supportedTypeDeclarations().forEach {
         val typeSpec = it.toTypeSpec(context.copy())
         JavaFile
@@ -71,7 +69,7 @@ class GraphQLCompiler {
       }
     }
 
-    if (writeFragmentsAndTypes) {
+    if (writeTypes) {
       if (context.customTypeMap.isNotEmpty()) {
         val typeSpec = CustomEnumTypeSpecBuilder(context.copy()).build()
         JavaFile
@@ -125,7 +123,7 @@ class GraphQLCompiler {
       val kotlinMultiPlatformProject: Boolean = false,
       // if this compilation unit is reusing some fragments and types from another one, use this
       // argument to prevent defining the classes multiple times
-      val writeFragmentsAndTypes: Boolean = false,
+      val writeTypes: Boolean = false,
       // only if generateKotlinModels = true
       val enumAsSealedClassPatternFilters: List<String>,
       // only if generateKotlinModels = false

@@ -243,7 +243,7 @@ abstract class ApolloGenerateSourcesTask : DefaultTask() {
         generateAsInternal = generateAsInternal.getOrElse(false),
         kotlinMultiPlatformProject = kotlinMultiPlatformProject.getOrElse(false),
         enumAsSealedClassPatternFilters = sealedClassesForEnumsMatching.getOrElse(emptyList()),
-        writeFragmentsAndTypes = metadata == null // If we have incoming metadata, skip writing the fragments and types
+        writeTypes = metadata == null // If we have incoming metadata, skip writing the fragments and types
     )
 
     GraphQLCompiler().write(args)

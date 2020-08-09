@@ -16,7 +16,7 @@ class GraphQLKompiler(
     private val generateAsInternal: Boolean = false,
     private val operationOutput: OperationOutput,
     private val kotlinMultiPlatformProject: Boolean,
-    private val writeFragmentsAndTypes: Boolean,
+    private val writeTypes: Boolean,
     private val enumAsSealedClassPatternFilters: List<Regex>
 ) {
   fun write(outputDir: File) {
@@ -33,7 +33,7 @@ class GraphQLKompiler(
         fragmentsPackageName = ir.fragmentsPackageName,
         generateAsInternal = generateAsInternal,
         kotlinMultiPlatformProject = kotlinMultiPlatformProject,
-        writeFragmentsAndTypes = writeFragmentsAndTypes,
+        writeTypes = writeTypes,
         enumAsSealedClassPatternFilters = enumAsSealedClassPatternFilters
     )
     schemaCodegen.apply(schema::accept).writeTo(outputDir)

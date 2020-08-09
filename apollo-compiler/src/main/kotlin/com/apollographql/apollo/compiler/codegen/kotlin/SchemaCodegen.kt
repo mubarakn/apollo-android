@@ -16,19 +16,19 @@ internal class SchemaCodegen(
     private val fragmentsPackageName: String,
     private val generateAsInternal: Boolean = false,
     private val kotlinMultiPlatformProject: Boolean,
-    private val writeFragmentsAndTypes: Boolean = true,
+    private val writeTypes: Boolean = true,
     private val enumAsSealedClassPatternFilters: List<Regex>
 ) : SchemaVisitor {
   private var fileSpecs: List<FileSpec> = emptyList()
 
   override fun visit(customTypes: CustomTypes) {
-    if (writeFragmentsAndTypes) {
+    if (writeTypes) {
       fileSpecs = fileSpecs + customTypes.typeSpec(generateAsInternal).fileSpec(typesPackageName)
     }
   }
 
   override fun visit(enumType: EnumType) {
-    if (writeFragmentsAndTypes) {
+    if (writeTypes) {
       fileSpecs = fileSpecs + enumType.typeSpec(
           generateAsInternal = generateAsInternal,
           enumAsSealedClassPatternFilters = enumAsSealedClassPatternFilters
@@ -37,21 +37,19 @@ internal class SchemaCodegen(
   }
 
   override fun visit(inputType: InputType) {
-    if (writeFragmentsAndTypes) {
+    if (writeTypes) {
       val inputTypeSpec = inputType.typeSpec(generateAsInternal)
       fileSpecs = fileSpecs + inputTypeSpec.fileSpec(typesPackageName)
     }
   }
 
   override fun visit(fragmentType: ObjectType) {
-    if (writeFragmentsAndTypes) {
-      val fragmentTypeSpec = fragmentType.typeSpec(generateAsInternal).let {
-        if (kotlinMultiPlatformProject) {
-          it.patchKotlinNativeOptionalArrayProperties()
-        } else it
-      }
-      fileSpecs = fileSpecs + fragmentTypeSpec.fileSpec(fragmentsPackageName)
+    val fragmentTypeSpec = fragmentType.typeSpec(generateAsInternal).let {
+      if (kotlinMultiPlatformProject) {
+        it.patchKotlinNativeOptionalArrayProperties()
+      } else it
     }
+    fileSpecs = fileSpecs + fragmentTypeSpec.fileSpec(fragmentsPackageName)
   }
 
   override fun visit(operationType: OperationType) {
