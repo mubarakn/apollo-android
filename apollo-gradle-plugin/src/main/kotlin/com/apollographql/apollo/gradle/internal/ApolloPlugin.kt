@@ -157,26 +157,26 @@ open class ApolloPlugin : Plugin<Project> {
 
         val (compilerParams, graphqlSourceDirectorySet) = compilationUnit.resolveParams(project)
 
-        it.graphqlFiles.setFrom(graphqlSourceDirectorySet)
+        task.graphqlFiles.setFrom(graphqlSourceDirectorySet)
         // I'm not sure if gradle is sensitive to the order of the rootFolders. Sort them just in case.
-        it.rootFolders.set(project.provider { graphqlSourceDirectorySet.srcDirs.map { it.relativeTo(project.projectDir).path }.sorted() })
-        it.schemaFile.set(compilerParams.schemaFile)
-        it.operationOutputGenerator = compilerParams.operationOutputGenerator.getOrElse(
+        task.rootFolders.set(project.provider { graphqlSourceDirectorySet.srcDirs.map { it.relativeTo(project.projectDir).path }.sorted() })
+        task.schemaFile.set(compilerParams.schemaFile)
+        task.operationOutputGenerator = compilerParams.operationOutputGenerator.getOrElse(
             OperationOutputGenerator.DefaultOperationOuputGenerator(
                 compilerParams.operationIdGenerator.orElse(OperationIdGenerator.Sha256()).get()
             )
         )
 
-        it.nullableValueType.set(compilerParams.nullableValueType)
-        it.useSemanticNaming.set(compilerParams.useSemanticNaming)
-        it.generateModelBuilder.set(compilerParams.generateModelBuilder)
-        it.useJavaBeansSemanticNaming.set(compilerParams.useJavaBeansSemanticNaming)
-        it.suppressRawTypesWarning.set(compilerParams.suppressRawTypesWarning)
-        it.generateKotlinModels.set(compilationUnit.generateKotlinModels())
-        it.generateVisitorForPolymorphicDatatypes.set(compilerParams.generateVisitorForPolymorphicDatatypes)
-        it.customTypeMapping.set(compilerParams.customTypeMapping)
-        it.outputDir.apply {
-          set(sourcesLocation(project, compilationUnit))
+        task.nullableValueType.set(compilerParams.nullableValueType)
+        task.useSemanticNaming.set(compilerParams.useSemanticNaming)
+        task.generateModelBuilder.set(compilerParams.generateModelBuilder)
+        task.useJavaBeansSemanticNaming.set(compilerParams.useJavaBeansSemanticNaming)
+        task.suppressRawTypesWarning.set(compilerParams.suppressRawTypesWarning)
+        task.generateKotlinModels.set(compilationUnit.generateKotlinModels())
+        task.generateVisitorForPolymorphicDatatypes.set(compilerParams.generateVisitorForPolymorphicDatatypes)
+        task.customTypeMapping.set(compilerParams.customTypeMapping)
+        task.outputDir.apply {
+          set(BuildDirLayout.sources(project, compilationUnit))
           disallowChanges()
         }
         if (compilerParams.generateOperationOutput.getOrElse(false)) {
