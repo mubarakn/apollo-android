@@ -45,15 +45,28 @@ abstract class DefaultCompilationUnit @Inject constructor(
     }
 
     if (!compilerParams.schemaFile.isPresent) {
-      val schemaPath = resolveSchema(project = project,
-          directories = sourceDirectorySet.srcDirs,
-          schemaPathProvider = service.schemaPath,
-          sourceSetNames = apolloVariant.sourceSetNames
+      // This needs to be lazy for:
+      // - test variants that don't have a schema
+      // - chained dependencies where the schema might not be written yet when we come here
+      val provider = project.layout.file(
+          project.provider {
+            if (sourceDirectorySet.isEmpty) {
+              // No sources at all, do not bother looking for a schema. Happens for test variants
+              return@provider null
+            }
+            resolveSchema(project = project,
+                directories = sourceDirectorySet.srcDirs,
+                schemaPathProvider = service.schemaPath,
+                sourceSetNames = apolloVariant.sourceSetNames
+            )?.let {
+              project.file(it)
+            }
+          }
       )
-      if (schemaPath != null) {
-        compilerParams.schemaFile.set(project.file(schemaPath))
-      }
+      // Gradle lazy magic above. We need to be able to represent a "not set" schema if none is found
+      compilerParams.schemaFile.set(provider)
     }
+
 
     return compilerParams to sourceDirectorySet
   }
