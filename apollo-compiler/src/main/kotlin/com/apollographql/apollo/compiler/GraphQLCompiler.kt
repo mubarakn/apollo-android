@@ -123,7 +123,7 @@ class GraphQLCompiler {
       val kotlinMultiPlatformProject: Boolean = false,
       // if this compilation unit is reusing some fragments and types from another one, use this
       // argument to prevent defining the classes multiple times
-      val writeTypes: Boolean = false,
+      val writeTypes: Boolean,
       // only if generateKotlinModels = true
       val enumAsSealedClassPatternFilters: List<String>,
       // only if generateKotlinModels = false

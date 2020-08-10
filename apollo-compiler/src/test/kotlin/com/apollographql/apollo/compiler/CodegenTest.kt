@@ -214,7 +214,8 @@ class CodeGenTest(private val folder: File) {
           generateVisitorForPolymorphicDatatypes = generateVisitorForPolymorphicDatatypes,
           generateAsInternal = generateAsInternal,
           kotlinMultiPlatformProject = true,
-          enumAsSealedClassPatternFilters = enumAsSealedClassPatternFilters
+          enumAsSealedClassPatternFilters = enumAsSealedClassPatternFilters,
+          writeTypes = true
       )
     }
 
